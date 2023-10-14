@@ -64,7 +64,11 @@ func NewFormatter(rgb ...bool) *Formatter {
 
 	if len(rgb) > 0 {
 		// Set tcell colors
-		formatter.KeyColor = NewTCellRGB(255, 0, 0)
+		formatter.KeyColor = NewTCellRGB(157, 135, 215)   // light purple
+		formatter.StringColor = NewTCellRGB(33, 196, 199) // cyan
+		formatter.BoolColor = NewTCellRGB(255, 255, 255)  // white
+		formatter.NumberColor = NewTCellRGB(255, 204, 85) // yellow
+		formatter.NullColor = NewTCellRGB(255, 114, 93)   // redish
 	}
 
 	return formatter
