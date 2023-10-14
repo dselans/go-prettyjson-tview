@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/hokaccha/go-prettyjson"
+	"github.com/dselans/go-prettyjson-tview"
 )
 
 func main() {

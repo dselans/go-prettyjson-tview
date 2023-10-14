@@ -10,24 +10,29 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
 )
+
+type Colorizer interface {
+	SprintFunc() func(a ...interface{}) string
+}
 
 // Formatter is a struct to format JSON data. `color` is github.com/fatih/color: https://github.com/fatih/color
 type Formatter struct {
 	// JSON key color. Default is `color.New(color.FgBlue, color.Bold)`.
-	KeyColor *color.Color
+	KeyColor Colorizer
 
 	// JSON string value color. Default is `color.New(color.FgGreen, color.Bold)`.
-	StringColor *color.Color
+	StringColor Colorizer
 
 	// JSON boolean value color. Default is `color.New(color.FgYellow, color.Bold)`.
-	BoolColor *color.Color
+	BoolColor Colorizer
 
 	// JSON number value color. Default is `color.New(color.FgCyan, color.Bold)`.
-	NumberColor *color.Color
+	NumberColor Colorizer
 
 	// JSON null value color. Default is `color.New(color.FgBlack, color.Bold)`.
-	NullColor *color.Color
+	NullColor Colorizer
 
 	// Max length of JSON string value. When the value is 1 and over, string is truncated to length of the value.
 	// Default is 0 (not truncated).
@@ -44,8 +49,8 @@ type Formatter struct {
 }
 
 // NewFormatter returns a new formatter with following default values.
-func NewFormatter() *Formatter {
-	return &Formatter{
+func NewFormatter(rgb ...bool) *Formatter {
+	formatter := &Formatter{
 		KeyColor:        color.New(color.FgBlue, color.Bold),
 		StringColor:     color.New(color.FgGreen, color.Bold),
 		BoolColor:       color.New(color.FgYellow, color.Bold),
@@ -56,6 +61,13 @@ func NewFormatter() *Formatter {
 		Indent:          2,
 		Newline:         "\n",
 	}
+
+	if len(rgb) > 0 {
+		// Set tcell colors
+		formatter.KeyColor = NewTCellRGB(255, 0, 0)
+	}
+
+	return formatter
 }
 
 // Marshal marshals and formats JSON data.
@@ -80,14 +92,7 @@ func (f *Formatter) Format(data []byte) ([]byte, error) {
 	return []byte(f.pretty(v, 1)), nil
 }
 
-func (f *Formatter) sprintfColor(c *color.Color, format string, args ...interface{}) string {
-	if f.DisabledColor || c == nil {
-		return fmt.Sprintf(format, args...)
-	}
-	return c.SprintfFunc()(format, args...)
-}
-
-func (f *Formatter) sprintColor(c *color.Color, s string) string {
+func (f *Formatter) sprintColor(c Colorizer, s string) string {
 	if f.DisabledColor || c == nil {
 		return fmt.Sprint(s)
 	}
@@ -197,4 +202,34 @@ func Marshal(v interface{}) ([]byte, error) {
 // Format JSON string with default options.
 func Format(data []byte) ([]byte, error) {
 	return NewFormatter().Format(data)
+}
+
+type TCellColorizer struct {
+	Color      tcell.Color // 24bit rgb as uint64
+	TViewBegin string      // [#HEX] style string
+	TViewEnd   string      // [-:-:-] style string
+}
+
+func NewTCellRGB(r, g, b int32, attrs ...string) *TCellColorizer {
+	c := tcell.NewRGBColor(r, g, b)
+
+	tviewBeginStr := "[#%X"
+
+	if len(attrs) > 0 {
+		tviewBeginStr += "::%s"
+	}
+
+	tviewBeginStr += "]"
+
+	return &TCellColorizer{
+		Color:      c,
+		TViewBegin: fmt.Sprintf("[#%X]", c.Hex()),
+		TViewEnd:   "[-:-:-]",
+	}
+}
+
+func (t *TCellColorizer) SprintFunc() func(a ...interface{}) string {
+	return func(a ...interface{}) string {
+		return t.TViewBegin + fmt.Sprint(a...) + t.TViewEnd
+	}
 }

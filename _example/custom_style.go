@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/hokaccha/go-prettyjson"
+
+	"github.com/dselans/go-prettyjson-tview"
 )
 
 func main() {

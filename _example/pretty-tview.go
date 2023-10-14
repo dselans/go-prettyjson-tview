@@ -12,13 +12,12 @@ func main() {
 		"num":   100,
 		"bool":  false,
 		"null":  nil,
-		"array": []string{"foo", "bar", "baz"},
+		"array": []string{"foo", "<bar>", "baz"},
 		"map": map[string]interface{}{
 			"foo": "bar",
 		},
 	}
-	f := prettyjson.NewFormatter()
-	f.DisabledColor = true
-	s, _ := f.Marshal(v)
+	formatter := prettyjson.NewFormatter(true)
+	s, _ := formatter.Marshal(v)
 	fmt.Println(string(s))
 }
